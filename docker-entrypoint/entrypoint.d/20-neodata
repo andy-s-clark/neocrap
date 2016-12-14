@@ -5,8 +5,7 @@ PROPERTIES="NAME DRIVER HOST INSTANCE PORT DATABASE QUERYTIMEOUT \
 
 echo "Configuring datasources"
 
-cp ${ENTRYPOINT_BASE}/templates/datasource_start.xml ${NEO_PATH}/neo-datasource.xml
-
+dsns=""
 for datasource in $DATASOURCES; do
   echo "Adding datasource '${datasource}'"
   # Set variables for this DSN. ex. DSN_USER
@@ -30,7 +29,7 @@ for datasource in $DATASOURCES; do
       eval "export ${property_var}='${override}'"
     fi
   done
-  envsubst < ${ENTRYPOINT_BASE}/templates/datasource_dsn.xml >> ${NEO_PATH}/neo-datasource.xml
+  dsns="${dsns}$(envsubst < ${ENTRYPOINT_BASE}/templates/datasource_dsn.xml)"
 done
-
-cat ${ENTRYPOINT_BASE}/templates/datasource_end.xml >> ${NEO_PATH}/neo-datasource.xml
+export dsns
+envsubst < ${ENTRYPOINT_BASE}/templates/datasource.xml > ${NEO_PATH}/neo-datasource.xml
