@@ -1,0 +1,36 @@
+#!/bin/sh
+
+PROPERTIES="NAME DRIVER HOST INSTANCE PORT DATABASE QUERYTIMEOUT \
+ MAXPOOLSTATEMENTS PASSWORD DESCRIPTION USER"
+
+echo "Configuring datasources"
+
+cp ${ENTRYPOINT_BASE}/templates/datasource_start.xml ${NEO_PATH}/neo-datasource.xml
+
+for datasource in $DATASOURCES; do
+  echo "Adding datasource '${datasource}'"
+  # Set variables for this DSN. ex. DSN_USER
+  DEFAULT_DSN_NAME="${datasource}"
+  DEFAULT_DSN_DATABASE="${datasource}"
+  for property in $PROPERTIES; do
+    default_var="DEFAULT_DSN_${property}"
+    eval "default=\$$default_var"
+
+    override_var="${datasource^^}_DSN_${property}"
+    eval "override=\$$override_var"
+
+    property_var="DSN_${property}"
+
+    # Use an override variable if set for this datasouce
+    # ex. MYDATASOURCE_DSN_DESCRIPTION
+    # LATER test for set, but empty to allow using empty as an override
+    if [ -z ${override} ]; then
+      eval "export ${property_var}='${default}'"
+    else
+      eval "export ${property_var}='${override}'"
+    fi
+  done
+  envsubst < ${ENTRYPOINT_BASE}/templates/datasource_dsn.xml >> ${NEO_PATH}/neo-datasource.xml
+done
+
+cat ${ENTRYPOINT_BASE}/templates/datasource_end.xml >> ${NEO_PATH}/neo-datasource.xml
